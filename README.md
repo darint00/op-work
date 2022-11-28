@@ -18,6 +18,9 @@ Operator Work,
 
 ### Test3
     * Add pvc
+    * removed init container, side car container
+    * updated bootstrap to bring up engine
+
 
 
 

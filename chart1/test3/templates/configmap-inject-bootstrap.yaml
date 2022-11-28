@@ -8,8 +8,48 @@ data:
   bootstrap.sh: |-
     #!/bin/bash
     echo "NEW BOOTSTRAP" 
-    while true
-    do
-    sleep 2
-    uptime | tee /tmp/out
-    done
+
+    . /opt/ibm/scripts/informix_inf.env
+
+    function setup() {
+      ### Setup Env
+      echo ". /opt/ibm/scripts/informix_inf.env" >> /home/informix/.bashrc
+
+      ### Setup $ONCONFIG
+      cp $INFORMIXDIR/etc/onconfig.std $INFORMIXDIR/etc/$ONCONFIG
+      MSGPATH_STR=`grep ^MSGPATH $INFORMIXDIR/etc/$ONCONFIG|awk '{print $2}'`
+      MSGPATH=`eval echo $MSGPATH_STR`
+      sed -i 's/^DBSERVERNAME/DBSERVERNAME informix/g' $INFORMIXDIR/etc/$ONCONFIG
+
+      ### Setup SQLHOSTS
+      echo "informix    onsoctcp    localhost     9089" > $INFORMIXDIR/etc/sqlhosts
+
+      ### Setup ROOTPATH
+      touch $INFORMIXDIR/tmp/demo_on.rootdbs
+      chmod 660 $INFORMIXDIR/tmp/demo_on.rootdbs
+
+      ### Initialize Server
+      if [ -f $INFORMIXDIR_DATA_DIR/.initialized ]
+      then
+        oninit
+      else
+        oninit -ivy
+      fi
+      touch $INFORMIX_DATA_DIR/.initialized 
+      touch $MSGPATH 
+    } 
+
+
+    ###
+    ### main
+    setup
+
+    echo MSGPATH=$MSGPATH
+    touch $MSGPATH
+    tail -f $MSGPATH    
+
+    # while true
+    # do
+    # sleep 2
+    # uptime | tee /tmp/out
+    # done

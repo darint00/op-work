@@ -40,23 +40,15 @@ spec:
           configMap:
             name: {{ include "chart1.fullname" . }}-bootstrap
             defaultMode: 0755
-      initContainers:
-        - name: init-ifx
-          image: busybox:latest
-          volumeMounts:
-            - name: bootstrap
-              mountPath: /tmp/bootstrap.sh
-              subPath: bootstrap.sh
-          command: [ "sh", "-c", "sleep 10" ]
       containers:
         - name: {{ .Chart.Name }}
-          command: [ "sh", "-c", "/opt/hcl/bootstrap.sh" ]
+          command: [ "sh", "-c", "/opt/ibm/bootstrap.sh" ]
           volumeMounts:
             - name: bootstrap
-              mountPath: /opt/hcl/bootstrap.sh
+              mountPath: /opt/ibm/bootstrap.sh
               subPath: bootstrap.sh
             - name: data
-              mountPath: /opt/hcl/data
+              mountPath: /opt/ibm/data
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
