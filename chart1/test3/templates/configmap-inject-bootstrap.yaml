@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chart1.fullname" . }}-bootstrap
+  labels:
+{{ include "chart1.labels" . | indent 4 }}
+data:
+  bootstrap.sh: |-
+    #!/bin/bash
+    echo "NEW BOOTSTRAP" 
+    while true
+    do
+    sleep 2
+    uptime | tee /tmp/out
+    done
