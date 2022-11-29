@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "chart1.fullname" . }}
+  labels:
+    {{- include "chart1.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  #serviceName: {{ include "chart1.fullname" . }}-service
+  serviceName: bob-service 
+  updateStrategy:  
+    type: RollingUpdate 
+  selector:
+    matchLabels:
+      {{- include "chart1.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "chart1.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "chart1.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: data
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "chart1.fullname" . ) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+        - name: bootstrap
+          configMap:
+            name: {{ include "chart1.fullname" . }}-bootstrap
+            defaultMode: 0755
+      containers:
+        - name: {{ .Chart.Name }}
+          command: [ "sh", "-c", "/opt/ibm/bootstrap.sh" ]
+          volumeMounts:
+            - name: bootstrap
+              mountPath: /opt/ibm/bootstrap.sh
+              subPath: bootstrap.sh
+            - name: data
+              mountPath: /opt/ibm/data
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+  {{- end }}

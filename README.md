@@ -21,6 +21,11 @@ Operator Work,
     * removed init container, side car container
     * updated bootstrap to bring up engine
 
+### Test4
+    * Move to statefulset.
+    * Had to change spec.strategy.type to spec.updateStrategy.type (RollingUpdate)
+    * Had to add spec.serviceName
+
 
 
 
