@@ -6,8 +6,7 @@ metadata:
     {{- include "chart1.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
-  #serviceName: {{ include "chart1.fullname" . }}-service
-  serviceName: bob-service 
+  serviceName: {{ include "chart1.fullname" . }}
   updateStrategy:  
     type: RollingUpdate 
   selector:
