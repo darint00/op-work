@@ -1,0 +1,6 @@
+apiVersion: actian.my.domain/v1beta1
+kind: Informix
+metadata:
+  name: informix-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,16 @@
+domain: my.domain
+layout:
+- go.kubebuilder.io/v4-alpha
+projectName: test1
+repo: my.domain
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.domain
+  group: actian
+  kind: Informix
+  path: my.domain/api/v1beta1
+  version: v1beta1
+version: "3"
