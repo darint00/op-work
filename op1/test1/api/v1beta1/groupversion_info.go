@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1beta1 contains API Schema definitions for the actian v1beta1 API group
-//+kubebuilder:object:generate=true
-//+groupName=actian.my.domain
+// +kubebuilder:object:generate=true
+// +groupName=actian.my.domain
 package v1beta1
 
 import (
