@@ -18,6 +18,9 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+
+	appsv1 "k8s.io/api/apps/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -47,9 +50,31 @@ type InformixReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
 func (r *InformixReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	// _ indicates an unused variable in Golang.
+	// By naming the variable, you can use the pre-configured logging framework.
+	log := log.FromContext(ctx)
+
+	// Start by declaring the custom resource to be type "Informix"
+	customResource := &actianv1beta1.Informix{}
+
+	// Then retrieve from the cluster the resource that triggered this reconciliation.
+	// Store these contents into an object used throughout reconciliation.
+	err := r.Client.Get(context.Background(), req.NamespacedName, customResource)
+	// If the resource does not match a "Website" resource type, return failure.
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	log.Info(fmt.Sprintf(`Hello from your new Informix reconciler with Tag: [%s]`, customResource.Spec.ImageTag))
 
 	// TODO(user): your logic here
+
+	// Attempt to create the deployment and return error if it fails
+	err = r.Client.Create(ctx, newDeployment(customResource.Name, customResource.Namespace, customResource.Spec.ImageTag))
+	if err != nil {
+		log.Error(err, fmt.Sprintf(`Failed to create deployment for website "%s"`, customResource.Name))
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -59,4 +84,46 @@ func (r *InformixReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&actianv1beta1.Informix{}).
 		Complete(r)
+}
+
+// Create a single reference for labels as it is a reused variable
+func setResourceLabels(name string) map[string]string {
+	return map[string]string{
+		"website": name,
+		"type":    "Website",
+	}
+}
+
+// Create a deployment with the correct field values. By creating this in a function,
+// it can be reused by all lifecycle functions (create, update, delete).
+func newDeployment(name, namespace, imageTag string) *appsv1.Deployment {
+	replicas := int32(2)
+
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels:    setResourceLabels(name),
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{MatchLabels: setResourceLabels(name)},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{Labels: setResourceLabels(name)},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name: "nginx",
+							// This is a publicly available container.  Note the use of
+							//`imageTag` as defined by the original resource request spec.
+							Image: fmt.Sprintf("abangser/todo-local-storage:%s", imageTag),
+							Ports: []corev1.ContainerPort{{
+								ContainerPort: 80,
+							}},
+						},
+					},
+				},
+			},
+		},
+	}
 }

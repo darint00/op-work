@@ -30,6 +30,9 @@ type InformixSpec struct {
 
 	// Foo is an example field of Informix. Edit informix_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
+	// ImageTag will be used to set the container image for Informix
+	//+kubebuilder:validation:Pattern=`^[-a-z0-9]*$`
+	ImageTag string `json:"imageTag"`
 }
 
 // InformixStatus defines the observed state of Informix
